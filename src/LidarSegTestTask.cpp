@@ -3,6 +3,7 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl/search/kdtree.h>
+#include <pcl/filters/passthrough.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/extract_indices.h>
@@ -26,6 +27,19 @@ int main()
     std::cout << "Loaded " << cloud->width * cloud->height
               << " data points from test.pcd with the following fields: " << std::endl;
 
+
+
+    // --- 0. Удаление диапазона точек по оси Z. Самый простой способ,однако не подходит для рельефа 
+    //Также не подходит, если надо учитывать объекты, располагающиеся близко к земле
+    //Однако очень хорошо подходит для выделения ROI 
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PassThrough<pcl::PointXYZ> pass;
+    pass.setInputCloud(cloud);
+    pass.setFilterFieldName("z");
+    pass.setFilterLimits(-2, -1.0); // Диапазон Z: оставляем точки от -1 до 10 метров
+    pass.filter(*cloud_filtered);
+
+
     // --- 1. RANSAC для выделения плоскости земли ---
 
     pcl::SACSegmentation<pcl::PointXYZ> seg;
@@ -35,9 +49,9 @@ int main()
     seg.setOptimizeCoefficients(true);
     seg.setModelType(pcl::SACMODEL_PLANE);
     seg.setMethodType(pcl::SAC_RANSAC);
-    seg.setDistanceThreshold(0.2);
+    seg.setDistanceThreshold(0.1);
     seg.setMaxIterations(500);
-    seg.setInputCloud(cloud);
+    seg.setInputCloud(cloud_filtered);
     seg.segment(*inliers, *coefficients);
 
     if (inliers->indices.empty())
@@ -56,7 +70,7 @@ int main()
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_ransac_ground(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::ExtractIndices<pcl::PointXYZ> extract;
-    extract.setInputCloud(cloud);
+    extract.setInputCloud(cloud_filtered);
     extract.setIndices(inliers);
     extract.setNegative(false);
     extract.filter(*cloud_ransac_ground);
