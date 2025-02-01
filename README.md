@@ -10,3 +10,14 @@
 ***Примечание***
 
 У меня криво встала pcl библиотека, поэтому для визуализации удаляемых точек из облака, использовался jupyter
+
+***Результаты***
+
+Евклидова кластеризация. 
+
+![ClusterRes](https://github.com/user-attachments/assets/9d767047-699e-4662-84b1-ebea1529912d)
+
+
+RANSAC
+
+![RANSACres](https://github.com/user-attachments/assets/08eb2037-8154-439b-bb05-4f5221fdf87f)
